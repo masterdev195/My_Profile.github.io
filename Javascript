@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sinh Viên</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f7f6; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; flex: 1; min-width: 150px; }
+        button { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; transition: 0.3s; }
+        .btn-add { background-color: #28a745; color: white; }
+        .btn-update { background-color: #007bff; color: white; display: none; }
+        .btn-edit { background-color: #ffc107; color: black; margin-right: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f1f1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Quản Lý Danh Sách Sinh Viên</h2>
+    
+    <div class="form-group">
+        <input type="hidden" id="editIndex">
+        <input type="text" id="maSV" placeholder="Mã SV">
+        <input type="text" id="hoTen" placeholder="Họ và Tên">
+        <input type="date" id="ngaySinh">
+        <input type="text" id="lopHoc" placeholder="Lớp">
+        <input type="number" id="gpa" step="0.1" min="0" max="4" placeholder="GPA">
+        <button class="btn-add" onclick="control.addStudent()">Thêm Mới</button>
+        <button class="btn-update" id="btnUpdate" onclick="control.saveUpdate()">Cập Nhật</button>
+    </div>
+
+    <table id="studentTable">
+        <thead>
+            <tr>
+                <th>Mã SV</th>
+                <th>Họ Tên</th>
+                <th>Ngày Sinh</th>
+                <th>Lớp</th>
+                <th>GPA</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<script>
+    // 1. Lớp đối tượng SinhVien (OOP)
+    class SinhVien {
+        constructor(maSV, hoTen, ngaySinh, lopHoc, gpa) {
+            this.maSV = maSV;
+            this.hoTen = hoTen;
+            this.ngaySinh = ngaySinh;
+            this.lopHoc = lopHoc;
+            this.gpa = parseFloat(gpa);
+        }
+
+        // Phương thức cập nhật thông tin đối tượng
+        updateInfo(newInfo) {
+            this.maSV = newInfo.maSV;
+            this.hoTen = newInfo.hoTen;
+            this.ngaySinh = newInfo.ngaySinh;
+            this.lopHoc = newInfo.lopHoc;
+            this.gpa = parseFloat(newInfo.gpa);
+        }
+    }
+
+    // 2. Controller điều khiển logic
+    const control = {
+        students: [],
+        
+        // Thêm sinh viên
+        addStudent() {
+            const info = this.getInputValues();
+            if(!info.maSV || !info.hoTen) return alert("Vui lòng nhập đủ thông tin!");
+            
+            const sv = new SinhVien(info.maSV, info.hoTen, info.ngaySinh, info.lopHoc, info.gpa);
+            this.students.push(sv);
+            this.render();
+            this.clearForm();
+        },
+
+        // Hiển thị dữ liệu ra bảng
+        render() {
+            const tbody = document.querySelector("#studentTable tbody");
+            tbody.innerHTML = "";
+            this.students.forEach((sv, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${sv.maSV}</td>
+                        <td>${sv.hoTen}</td>
+                        <td>${sv.ngaySinh}</td>
+                        <td>${sv.lopHoc}</td>
+                        <td>${sv.gpa}</td>
+                        <td>
+                            <button class="btn-edit" onclick="control.editStudent(${index})">Sửa</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        },
+
+        // Đổ dữ liệu lên form để sửa
+        editStudent(index) {
+            const sv = this.students[index];
+            document.getElementById("maSV").value = sv.maSV;
+            document.getElementById("hoTen").value = sv.hoTen;
+            document.getElementById("ngaySinh").value = sv.ngaySinh;
+            document.getElementById("lopHoc").value = sv.lopHoc;
+            document.getElementById("gpa").value = sv.gpa;
+            document.getElementById("editIndex").value = index;
+
+            document.querySelector(".btn-add").style.display = "none";
+            document.querySelector(".btn-update").style.display = "inline-block";
+        },
+
+        // Lưu thông tin sau khi cập nhật
+        saveUpdate() {
+            const index = document.getElementById("editIndex").value;
+            const info = this.getInputValues();
+            
+            // Sử dụng phương thức updateInfo của class SinhVien
+            this.students[index].updateInfo(info);
+            
+            this.render();
+            this.clearForm();
+            document.querySelector(".btn-add").style.display = "inline-block";
+            document.querySelector(".btn-update").style.display = "none";
+        },
+
+        // Helper lấy giá trị input
+        getInputValues() {
+            return {
+                maSV: document.getElementById("maSV").value,
+                hoTen: document.getElementById("hoTen").value,
+                ngaySinh: document.getElementById("ngaySinh").value,
+                lopHoc: document.getElementById("lopHoc").value,
+                gpa: document.getElementById("gpa").value
+            };
+        },
+
+        clearForm() {
+            document.querySelectorAll(".form-group input").forEach(input => input.value = "");
+        }
+    };
+</script>
+
+</body>
+</html>
